@@ -4,67 +4,99 @@
 #include <conio.h>
 #include "common.h"
 
-void gotoxy(int x, int y) {
-    COORD pos = { (short)x, (short)y };
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+// 设置光标位置
+void gotoxy(int x, int y) 
+{
+	COORD pos = { x, y };  //  创建坐标结构体
+	SetConsoleCursorPosition(GetStdHandle(handle), pos); // 设置光标位置
 }
 
-void setColor(int color) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+// 设置文本颜色
+void setColor(int color) 
+{
+	SetConsoleTextAttribute(GetStdHandle(handle), color);// 设置文本颜色
 }
 
-void hideCursor() {
-    CONSOLE_CURSOR_INFO c = { 1, FALSE };
-    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &c);
+
+// 隐藏光标
+void hideCursor() 
+{
+	CONSOLE_CURSOR_INFO c = { 1, FALSE };// 隐藏光标
+	SetConsoleCursorInfo(GetStdHandle(handle), &c);// 设置光标信息
 }
 
-void showCursor() {
-    CONSOLE_CURSOR_INFO c = { 1, TRUE };
-    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &c);
+// 显示光标
+void showCursor() 
+{
+	CONSOLE_CURSOR_INFO c = { 1, TRUE };    // 显示光标
+	SetConsoleCursorInfo(GetStdHandle(handle), &c);
 }
 
-int getConsoleWidth() {
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+// 获取控制台宽度
+int getConsoleWidth() 
+{
+	CONSOLE_SCREEN_BUFFER_INFO length;    
+    GetConsoleScreenBufferInfo(GetStdHandle(handle), &length);
+	return length.srWindow.Right - length.srWindow.Left + 1;        // 计算宽度
 }
 
-void printCentered(const char* text, int y) {
-    int width = getConsoleWidth();
-    int visualLen = 0;
-    for (int i = 0; text[i]; ) {
-        if ((unsigned char)text[i] >= 0x80) { visualLen += 2; i += 3; }
-        else { visualLen += 1; i += 1; }
+
+// 居中打印文本
+void printCentered(const char* txt, int y) //表示行号
+{
+	int width = getConsoleWidth();  //获取控制台宽度
+	int strlens = 0;      //计算文本的可视长度
+	for (int i = 0; txt[i]; )  //遍历文本
+    {
+		if ((unsigned char)txt[i] >= 0x80) //中文字符 UTF-8 编码的中文字符（占3字节
+        {
+			strlens += 2; 
+            i += 3;     //跳过三个字节
+        }
+        else 
+        {
+			strlens += 1; 
+            i += 1;     //跳过一个字节
+        }
     }
-    int x = (width - visualLen) / 2;
-    gotoxy(x < 0 ? 0 : x, y);
-    printf("%s", text);
+	int x = (width - strlens) / 2;      //计算起始打印位置
+	gotoxy(x < 0 ? 0 : x, y);   //设置光标位置
+	printf("%s", txt); //打印文本
 }
 
-void drawButton(const char* text, int x, int y, int isSelected) {
-    gotoxy(x, y);
-    if (isSelected) {
-        setColor(COLOR_RED);
-        printf("> %s <", text);
+// 绘制按钮
+void drawButton(const char* txt, int x, int y, int isSelected) 
+{
+	gotoxy(x, y);   //设置光标打印位置
+    if (isSelected) 
+    {
+        setColor(red);
+        printf("> %s <", txt);
     }
-    else {
-        setColor(COLOR_WHITE);
-        printf("  %s  ", text);
+    else 
+    {
+        setColor(white);
+        printf("  %s  ", txt);
     }
-    setColor(COLOR_WHITE);
+	setColor(white);// 恢复颜色
 }
 
-int handleNavigation(char key, int* curRow, int* curCol, int maxRows, int maxCols) {
-    if (key == -32 || key == 0) { // 处理方向键
-        char subKey = _getch();
-        if (subKey == 72) key = 'w';      // Up
-        else if (subKey == 80) key = 's'; // Down
-        else if (subKey == 75) key = 'a'; // Left
-        else if (subKey == 77) key = 'd'; // Right
+
+// 处理菜单导航
+int handleNavigation(char input, int* curRow, int* curCol, int maxRows, int maxCols) 
+{
+    if (input == -32 || input == 0) 
+    { 
+        char curinput = _getch();
+        if (curinput == 72) input = 'w';      // 上
+        else if (curinput == 80) input = 's'; // 下
+        else if (curinput == 75) input = 'a'; // 左
+        else if (curinput == 77) input = 'd'; // 右
     }
-    if (key >= 'A' && key <= 'Z') key += 32;
-    switch (key) {
-    case 'w': *curRow = (*curRow - 1 + maxRows) % maxRows; return 1;
+    if (input >= 'A' && input <= 'Z') input += 32;
+    switch (input) 
+    {
+	case 'w': *curRow = (*curRow - 1 + maxRows) % maxRows; return 1;    // 行号-1，表示循环
     case 's': *curRow = (*curRow + 1) % maxRows; return 1;
     case 'a': *curCol = (*curCol - 1 + maxCols) % maxCols; return 1;
     case 'd': *curCol = (*curCol + 1) % maxCols; return 1;
@@ -72,14 +104,21 @@ int handleNavigation(char key, int* curRow, int* curCol, int maxRows, int maxCol
     return 0;
 }
 
-int isValidPhone(const char* phone) {
-    if (strlen(phone) != 10) return 0;
-    for (int i = 0; i < 10; i++) if (phone[i] < '0' || phone[i] > '9') return 0;
+// 验证电话号码格式
+int isValidPhone(const char* phone) 
+{
+	if (strlen(phone) != 10) return 0;// 长度必须为10
+	for (int i = 0; i < 10; i++) // 每个字符必须是数字
+        if (phone[i] < '0' || phone[i] > '9') 
+            return 0;
     return 1;
 }
 
-int isValidEmail(const char* email) {
-    const char* at = strchr(email, '@');
-    const char* dot = strstr(email, ".com");
-    return (at && dot && at < dot && at > email);
+
+// 验证邮箱格式
+int isValidEmail(const char* email) 
+{
+	const char* a = strchr(email, '@');        // 查找 '@' 符号
+	const char* dot = strstr(email, ".com");    // 查找 '.com' 后缀
+    return (a && dot && (a < dot) && (a > email));
 }

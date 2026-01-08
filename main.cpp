@@ -5,14 +5,18 @@
 #include "addressbook.h"
 #include "account.h"
 
-int main() {
+int main() 
+{
+    //解决编码显示问题
     SetConsoleOutputCP(65001);
     SetConsoleCP(65001);
 
-    // --- 外层大循环：支持多次登录/切换账户 ---
-    while (1) {
+    // 外层大循环：支持多次登录/切换账户 
+    while (1) 
+    {
         // 1. 账户登录/注册系统
-        if (!accountSystem()) {
+        if (!accountSystem()) 
+        {
             return 0; // 在登录界面选“退出”则结束整个程序
         }
 
@@ -25,22 +29,25 @@ int main() {
         printCentered("=== 通讯录管理系统 ===", 5);
         printCentered("(方向键或WASD控制, Enter确定)", 6);
 
-        // --- 内层循环：通讯录菜单操作 ---
+        // 通讯录菜单操作 
         int switchAccount = 0; // 标记是否点击了切换账户
-        while (1) {
-            showMenu(choice);
-            char key = _getch();
+        while (1) 
+        {
+            showMenu(choice);   
+            char input = _getch();
 
-            // 注意：此时菜单总数变为了 7
-            handleNavigation(key, &choice, &dummyCol, 7, 1);
+            //此时菜单总数变为了 7
+            handleNavigation(input, &choice, &dummyCol, 7, 1);
 
-            if (key == '\r') {
-                switch (choice) {
-                case 0: addContact(); break;
-                case 1: deleteContact(); break;
-                case 2: searchContact(); break;
-                case 3: displayContacts(); break;
-                case 4: sortContacts(); break;
+			if (input == '\r') // 回车确认，——getch（）必须为\r,不能是\n
+            {
+                switch (choice) 
+                {
+                case 0: addContact(); break;//增
+                case 1: deleteContact(); break;//删
+				case 2: searchContact(); break;//查
+				case 3: displayContacts(); break;// 显示
+				case 4: sortContacts(); break;// 排序
                 case 5: // --- 切换账户 ---
                     saveContacts(); // 必须先保存当前用户数据
                     switchAccount = 1; // 标记需要切换
