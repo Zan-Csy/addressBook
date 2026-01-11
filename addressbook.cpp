@@ -16,8 +16,10 @@ int contactCount = 0;// 当前联系人数量
 void loadContacts() 
 {
     char fileName[100]; 
-	sprintf(fileName, "contacts_%s.dat", currentLoggedInUser);// 拼接文件名
-	FILE* f; contactCount = 0;// 当前联系人数量
+	
+    sprintf(fileName, "contacts_%s.dat", currentLoggedInUser);
+	
+    FILE* f; contactCount = 0;// 当前联系人数量
     if (fopen_s(&f, fileName, "rb") == 0) //读取
     {
         fread(&contactCount, sizeof(int), 1, f);
@@ -230,41 +232,6 @@ void deleteContact()
     }
 }
 
-void searchContact() 
-{
-    char name[50] = ""; system("cls");
-    printCentered("=== 查 询 联 系 人 ===", 5);
-
-    showCursor(); 
-    gotoxy(getConsoleWidth() / 2 - 5, 7); 
-    scanf_s("%49s", name, 50); 
-    while (getchar() != '\n');
-    hideCursor();
-    
-    system("cls");
-    
-    int f = -1;
-    for (int i = 0; i < contactCount; i++) 
-        if (strcmp(contacts[i].name, name) == 0) 
-        {
-            f = i; 
-			break; //找到联系人
-        }
-    if (f != -1) 
-    {
-        printCentered("--- 查 询 结 果 ---", 5);
-        int x = (getConsoleWidth() - 30) / 2;
-        gotoxy(x, 7); printf("姓  名: %s", contacts[f].name);
-        gotoxy(x, 8); printf("电  话: %s", contacts[f].phone);
-        gotoxy(x, 9); printf("邮  箱: %s", contacts[f].email);
-    }
-    else printCentered("未找到该联系人！", 8);
-    drawButton("返回", getConsoleWidth() / 2 - 3, 12, 1);
-    while (_getch() != '\r');
-}
-
-
-
 // 快速排序辅助函数
 void swapContacts(Contact* a, Contact* b) {
     Contact temp = *a;
@@ -297,6 +264,57 @@ void mySort(int low, int high) {
         mySort(pi + 1, high);
     }
 }
+
+
+//二分查找
+int binarysearch(const char* name)
+{
+    int low = 0, high = contactCount - 1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        int res = strcmp(contacts[mid].name, name);
+        if (res == 0) return mid;      // 找到了
+        if (res < 0) low = mid + 1;    // 在右半边
+        else high = mid - 1;           // 在左半边
+    }
+    return -1;
+}
+
+void searchContact() 
+{
+    char name[50] = ""; system("cls");
+    printCentered("=== 查 询 联 系 人 ===", 5);
+
+    showCursor(); 
+    gotoxy(getConsoleWidth() / 2 - 5, 7); 
+    scanf_s("%49s", name, 50); 
+    while (getchar() != '\n');
+    hideCursor();
+    
+    system("cls");
+    
+	mySort(0, contactCount - 1); //确保有序
+
+    int f = binarysearch(name);
+   // for (int i = 0; i < contactCount; i++) 
+   //     if (strcmp(contacts[i].name, name) == 0) 
+   //     {
+   //         f = i; 
+			//break; //找到联系人
+   //     }
+    if (f != -1) 
+    {
+        printCentered("--- 查 询 结 果 ---", 5);
+        int x = (getConsoleWidth() - 30) / 2;
+        gotoxy(x, 7); printf("姓  名: %s", contacts[f].name);
+        gotoxy(x, 8); printf("电  话: %s", contacts[f].phone);
+        gotoxy(x, 9); printf("邮  箱: %s", contacts[f].email);
+    }
+    else printCentered("未找到该联系人！", 8);
+    drawButton("返回", getConsoleWidth() / 2 - 3, 12, 1);
+    while (_getch() != '\r');
+}
+
 
 void sortContacts() {
     /*if (contactCount > 1)
